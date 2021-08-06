@@ -1,0 +1,292 @@
+<?php
+include "../include/conexion.php";
+
+include "../../libreria/phpgrid-full-v2.6.3/lib/inc/jqgrid_dist.php";
+$conexion =conectari();
+$grid = new jqgrid($conexion);
+
+
+$opt["rowNum"] = 20; // by default 20
+
+$opt["sortname"] = 'NumFactura'; // by default sort grid by this field
+
+$opt["sortorder"] = "desc"; // ASC or DESC
+
+$opt["caption"] = "Relación facturas"; // caption of grid
+
+$opt["autowidth"] = true; // expand grid to screen width
+
+$opt["multiselect"] = false; // allow you to multi-select through checkboxes
+
+$opt["height"] = "770";
+
+$opt["altRows"] = true; 
+
+
+$opt["altclass"] = "myAltRowClass"; 
+$opt["toolbar"] = "both";
+
+$opt["export"] = array("format"=>"xls", 
+						"filename"=>"Clientes", 
+						"heading"=>"Export to Excel Test", 
+						"range"=>"filtered");
+
+
+
+$grid->set_options($opt);
+/*
+$grid->select_command = "SELECT tbalbaranesgc21.Cliente, clientes.Nombre, tbalbaranesgc21.NumFactura, tbalbaranesgc21.FechaFactura,
+rOUND((SUM(Portes) + SUM( Tigic) ),2) as TOTAL, 'I' as Tipo, Pagado, FormaPagado, FechaPago
+
+ FROM
+ 	clientes INNER JOIN tbalbaranesgc21 ON clientes.IdCliente = tbalbaranesgc21.Cliente
+Where ( NumFactura <>0)
+GROUP BY NumFactura, clientes.Nombre
+
+UNION all
+
+SELECT Terrestre21.Cliente, clientes.Nombre, Terrestre21.NumFactura, Terrestre21.FechaFactura,	round(Sum(Terrestre21.TotalPortes),2) as TOTAL,  'T' as Tipo, Pagado, FormaPagado, FechaPago
+FROM
+clientes INNER JOIN Terrestre21 ON clientes.IdCliente = Terrestre21.Cliente
+where 
+( NumFactura <>0)
+
+GROUP BY NumFactura, clientes.Nombre";	 
+*/
+
+$grid->select_command = "SELECT tbalbaranesgc21.Cliente AS IdCliente, cl.Nombre as Nombre, tbalbaranesgc21.NumFactura as NumFactura, tbalbaranesgc21.FechaFactura as FechaFactura,
+ROUND((SUM(Portes) + SUM( Tigic) ),2) as TOTAL, 'I' as Tipo, Pagado, FormaPagado, FechaPago
+
+ FROM
+clientes cl INNER JOIN tbalbaranesgc21 ON cl.IdCliente = tbalbaranesgc21.Cliente
+Where ( NumFactura <>0)
+GROUP BY NumFactura, cl.Nombre
+
+
+UNION all
+
+SELECT Terrestre21.Cliente AS IdCliente, cl2.Nombre as Nombre, Terrestre21.NumFactura as NumFactura, Terrestre21.FechaFactura as FechaFactura,	round(Sum(Terrestre21.TotalPortes),2) as TOTAL,  'T' as Tipo, Pagado, FormaPagado, FechaPago
+FROM
+clientes cl2 INNER JOIN Terrestre21 ON cl2.IdCliente = Terrestre21.Cliente
+where 
+( NumFactura <>0)
+
+GROUP BY NumFactura, cl2.Nombre";
+
+//$grid->debug_sql = true;
+
+
+
+// this db table will be used for add,edit,delete
+
+
+$col = array();
+$col["title"] = "Tipo";
+$col["name"] = "Tipo";
+$col["align"] = "center";
+$col["sortable"] = true; // this column is not sortable
+$col["search"] = false; // this column is not searchable
+$col["editable"] = false;
+$col["width"]="15";
+$cols[] = $col;
+
+$col = array();
+$col["title"] = "N. Factura"; // caption of column
+$col["name"] = "NumFactura"; // grid column name, must be exactly same as returned column-name from sql (tablefield or field-alias)
+$col["editable"] = False;
+$col["search"] = true;
+$col["viewable"] = true; 
+$col["sortable"] = true; 
+$col["align"] = "center";
+$col["width"]="30";
+//$col["editoptions"] = array("value" => $c_id); // set default value
+$cols[] = $col;		
+
+$col = array();
+$col["title"] = "F. Factura"; // caption of column
+$col["name"] = "FechaFactura"; // grid column name, must be exactly same as returned column-name from sql (tablefield or field-alias)
+$col["editable"] = False;
+$col["formatter"] = "date";
+$col["formatoptions"] = array("srcformat"=>'Y-m-d',"newformat"=>'d-m-Y');
+$col["viewable"] = true; 
+$col["sortable"] = true; 
+$col["align"] = "center";
+$col["width"]="30";
+//$col["editoptions"] = array("value" => $c_id); // set default value
+$cols[] = $col;		
+
+$col = array();
+$col["title"] = "Nombre";
+$col["name"] = "Nombre";
+//$col["dbname"] = "clientes.Nombre";
+$col["sortable"] = true; // this column is not sortable
+$col["search"] = true; // this column is not searchable
+$col["editable"] = False;
+$col["width"]="80";
+$cols[] = $col;
+
+
+
+
+$col = array();
+$col["title"] = "Total";
+$col["name"] = "TOTAL";
+
+$col["align"] = "left";
+$col["search"] = false;
+$col["sortable"] = true;
+$col["width"] ="20";
+# no new line in this html, only space. otherwise it may break ui of grid
+$col["align"] = "right";
+$col["formatter"] = "number";
+$col["formatoptions"] = array("thousandsSeparator" => ".",
+                                "decimalSeparator" => ",",
+                                "decimalPlaces" => 2);
+
+$cols[] = $col;
+
+
+
+
+$col = array();
+$col["title"] = "Pagado";
+$col["name"] = "Pagado";
+$col["sortable"] = true; // this column is not sortable
+$col["search"] = true; // this column is not searchable
+$col["editable"] = true;
+$col["edittype"] = "checkbox";
+$col["align"] = "center";
+$col["editoptions"] = array("value"=>"Si:No");
+$col["width"] ="20";
+$cols[] = $col;
+
+$col = array();
+$col["title"] = "Forma Pago";
+$col["name"] = "FormaPagado";
+$col["sortable"] = true; // this column is not sortable
+$col["search"] = true; // this column is not searchable
+$col["editable"] = true;
+$col["width"]="50";
+$col["edittype"] = "select";
+$col["editoptions"] = array("value"=>'Pendiente:Pendiente;Efectivo:Efectivo;Datafono:Datafono;Cheque:Cheque;Tranferencia:Transferencia;Confirming:Confirming;Pagare:Pagaré');
+
+$cols[] = $col;
+
+$col = array();
+$col["title"] = "Fecha Pago";
+$col["name"] = "FechaPago";
+$col["editable"] = true;
+$col["formatter"] = "date";
+$col["formatoptions"] = array("srcformat"=>'Y-m-d',"newformat"=>'d-m-Y');
+$col["viewable"] = true; 
+$col["sortable"] = true; 
+$col["align"] = "center";
+$col["width"] ="20";
+//$col["editoptions"] = array("value" => $c_id); // set default value
+$cols[] = $col;
+
+$grid->set_actions(array(	
+
+						"add"=>false, // allow/disallow add
+
+						"edit"=>true, // allow/disallow edit
+
+						"delete"=>false, // allow/disallow delete
+
+						"rowactions"=>true, // show/hide row wise edit/del/save option
+
+						"export"=>true, // show/hide export to excel option
+
+						"autofilter" => true, // show/hide autofilter for search
+
+						"search" => "advance" // show single/multi field search condition (e.g. simple or advance)
+						  
+					) 
+
+				);
+
+
+
+
+$grid->set_columns($cols);
+
+$out = $grid->render("list1");
+
+?>
+
+<!DOCTYPE html>
+<html dir="ltr" lang="en-US"><head><!-- Created by Artisteer v4.3.0.60745 -->
+    <meta charset="utf-8">
+    <title>Relación facturas.</title>
+   
+    <!--[if lt IE 9]><script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+   
+    <!--[if lte IE 7]><link rel="stylesheet" href="../css/style.ie7.css" media="screen" /><![endif]-->
+   
+
+    <script src="../js/jquery.js"></script>
+    <script src="../js/script.js"></script>
+ 
+    <link rel="stylesheet" href="../css/style.css" media="screen">
+   <link rel="stylesheet" type="text/css" media="screen" href="../../libreria/phpgrid-full-v2.6.3/lib/js/themes/redmond/jquery-ui.custom.css"></link>	
+	<link rel="stylesheet" type="text/css" media="screen" href="../../libreria/phpgrid-full-v2.6.3/lib/js/jqgrid/css/ui.jqgrid.css"></link>	
+	
+	<script src="../../libreria/phpgrid-full-v2.6.3/lib/js/jquery.min.js" type="text/javascript"></script>
+	<script src="../../libreria/phpgrid-full-v2.6.3/lib/js/jqgrid/js/i18n/grid.locale-es.js" type="text/javascript"></script>
+	<script src="../../libreria/phpgrid-full-v2.6.3/lib/js/jqgrid/js/jquery.jqGrid.min.js" type="text/javascript"></script>	
+	<script src="../../libreria/phpgrid-full-v2.6.3/lib/js/themes/jquery-ui.custom.min.js" type="text/javascript"></script>
+
+
+  <style>
+	.myAltRowClass { background-color: #DDDDDC; background-image: none; }
+	  .kpro-article .ui-jqgrid th,.kpro-article .ui-jqgrid td
+{
+border: 0;
+}
+
+
+	
+</style>          
+</head>
+<body>
+<div id="kpro-main">
+<nav class="kpro-nav">
+    <?php include "../include/menu.php"; ?>
+    </nav>
+<div class="kpro-sheet clearfix">
+            <div class="kpro-layout-wrapper">
+                <div class="kpro-content-layout">
+                    <div class="kpro-content-layout-row">
+                        <div class="kpro-layout-cell kpro-content"><article class="kpro-post kpro-article">
+							<div align="center">
+                                <?php echo  $out; ?>
+                            </div>
+                                <div class="kpro-postcontent kpro-postcontent-0 clearfix"><p>
+                                
+                                <br/></p></div>
+                                
+                
+
+</article></div>
+                    </div>
+                </div>
+            </div><footer class="kpro-footer">
+<div class="kpro-content-layout">
+    <div class="kpro-content-layout-row">
+    <div class="kpro-layout-cell layout-item-0" style="width: 100%">
+        <p>A tincidunt pellentesque suspendisse vehicula et non eros.</p>
+    </div>
+    </div>
+</div>
+
+    <p class="kpro-page-footer">
+        <span id="kpro-footnote-links">Designed by Sergio Pulido..</span>
+    </p>
+</footer>
+
+    </div>
+</div>
+
+
+</body></html>
+
